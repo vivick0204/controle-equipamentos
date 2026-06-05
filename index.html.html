@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Controle de Equipamentos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  /* ── Variáveis ── */
+  :root {
+    --bg: #f4f3ef;
+    --card: #ffffff;
+    --text: #1a1a18;
+    --muted: #6b6b66;
+    --border: #e2e0d8;
+    --green: #1a7a4a;
+    --green-bg: #eaf5ee;
+    --green-border: #b3dfc3;
+    --red: #b83232;
+    --red-bg: #fceaea;
+    --red-border: #f0b3b3;
+    --amber: #8a5c00;
+    --amber-bg: #fef6e4;
+    --amber-border: #f5d98a;
+    --accent: #1a1a18;
+    --radius: 12px;
+    --mono: 'DM Mono', monospace;
+    --sans: 'DM Sans', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px 16px 40px;
+  }
+
+  header {
+    width: 100%;
+    max-width: 480px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+
+  .logo {
+    width: 36px; height: 36px;
+    background: var(--accent);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .logo svg { width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: round; }
+
+  header h1 { font-size: 16px; font-weight: 600; letter-spacing: -0.3px; }
+  header p  { font-size: 12px; color: var(--muted); }
+
+  /* ── Card principal ── */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    width: 100%;
+    max-width: 480px;
+  }
+
+  /* ── Estado de carregamento ── */
+  #estado-carregando {
+    text-align: center;
+    padding: 40px 0;
+  }
+  .spinner {
+    width: 32px; height: 32px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin .8s linear infinite;
+    margin: 0 auto 16px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Ficha do equipamento ── */
+  .equip-nome {
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+    margin-bottom: 4px;
+  }
+  .equip-sub {
+    font-size: 13px;
+    color: var(--muted);
+    font-family: var(--mono);
+    margin-bottom: 20px;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 4px 10px;
+    border-radius: 100px;
+    margin-bottom: 20px;
+  }
+  .badge::before {
+    content: '';
+    width: 7px; height: 7px;
+    border-radius: 50%;
+  }
+  .badge.disponivel {
+    background: var(--green-bg);
+    color: var(--green);
+    border: 1px solid var(--green-border);
+  }
+  .badge.disponivel::before { background: var(--green); }
+
+  .badge.em-uso {
+    background: var(--red-bg);
+    color: var(--red);
+    border: 1px solid var(--red-border);
+  }
+  .badge.em-uso::before { background: var(--red); }
+
+  .info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .info-item label {
+    display: block;
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: .6px;
+    color: var(--muted);
+    margin-bottom: 2px;
+  }
+  .info-item span {
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin-bottom: 20px;
+  }
+
+  /* ── Formulário ── */
+  .form-title {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 16px;
+  }
+
+  .field { margin-bottom: 14px; }
+  .field label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .field input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-family: var(--sans);
+    font-size: 14px;
+    background: var(--bg);
+    color: var(--text);
+    transition: border-color .15s;
+    -webkit-appearance: none;
+  }
+  .field input:focus {
+    outline: none;
+    border-color: var(--accent);
+    background: #fff;
+  }
+  .field input::placeholder { color: #b0aea8; }
+
+  /* ── Botões ── */
+  .btn {
+    width: 100%;
+    padding: 13px;
+    border: none;
+    border-radius: 10px;
+    font-family: var(--sans);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity .15s, transform .1s;
+    margin-top: 4px;
+  }
+  .btn:active { transform: scale(0.98); opacity: .85; }
+  .btn:disabled { opacity: .5; cursor: not-allowed; }
+
+  .btn-retirar {
+    background: var(--accent);
+    color: #fff;
+  }
+  .btn-devolver {
+    background: var(--green);
+    color: #fff;
+  }
+
+  /* ── Em uso: aviso ── */
+  .aviso-em-uso {
+    background: var(--amber-bg);
+    border: 1px solid var(--amber-border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 20px;
+  }
+  .aviso-em-uso p {
+    font-size: 13px;
+    color: var(--amber);
+    font-weight: 500;
+    margin-bottom: 2px;
+  }
+  .aviso-em-uso small {
+    font-size: 12px;
+    color: var(--amber);
+    opacity: .8;
+  }
+
+  /* ── Resultado ── */
+  #estado-resultado { text-align: center; padding: 20px 0; }
+  .resultado-icone {
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 16px;
+    font-size: 26px;
+  }
+  .resultado-icone.ok  { background: var(--green-bg); }
+  .resultado-icone.err { background: var(--red-bg); }
+  .resultado-titulo { font-size: 17px; font-weight: 600; margin-bottom: 6px; }
+  .resultado-msg    { font-size: 13px; color: var(--muted); margin-bottom: 24px; }
+  .resultado-hora   {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 14px;
+    display: inline-block;
+    margin-bottom: 24px;
+  }
+  .btn-novo {
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 11px 24px;
+    font-family: var(--sans);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+  }
+
+  /* ── Erro ── */
+  #estado-erro { text-align: center; padding: 30px 0; }
+  .erro-icone { font-size: 36px; margin-bottom: 12px; }
+  .erro-titulo { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
+  .erro-msg    { font-size: 13px; color: var(--muted); }
+
+  /* ── Estados ocultos ── */
+  .escondido { display: none; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3m3-3v3m0 3h-3"/></svg>
+  </div>
+  <div>
+    <h1>Controle de Equipamentos</h1>
+    <p id="txt-subtitulo">Carregando...</p>
+  </div>
+</header>
+
+<div class="card">
+
+  <!-- ESTADO: Carregando -->
+  <div id="estado-carregando">
+    <div class="spinner"></div>
+    <p style="font-size:14px;color:var(--muted)">Buscando equipamento...</p>
+  </div>
+
+  <!-- ESTADO: Equipamento encontrado -->
+  <div id="estado-equip" class="escondido">
+    <p class="equip-nome" id="equip-nome">—</p>
+    <p class="equip-sub"  id="equip-sub">—</p>
+
+    <span class="badge" id="equip-badge">—</span>
+
+    <div class="info-grid">
+      <div class="info-item">
+        <label>Marca</label>
+        <span id="equip-marca">—</span>
+      </div>
+      <div class="info-item">
+        <label>Modelo</label>
+        <span id="equip-modelo">—</span>
+      </div>
+      <div class="info-item">
+        <label>Categoria</label>
+        <span id="equip-categoria">—</span>
+      </div>
+      <div class="info-item">
+        <label>Nº de série</label>
+        <span id="equip-serie">—</span>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <!-- Aviso se em uso -->
+    <div id="aviso-em-uso" class="aviso-em-uso escondido">
+      <p>⚠️ Equipamento em uso</p>
+      <small id="aviso-em-uso-detalhe">—</small>
+    </div>
+
+    <!-- Formulário -->
+    <p class="form-title" id="form-titulo">Registrar retirada</p>
+
+    <div class="field">
+      <label for="campo-nome">Seu nome</label>
+      <input type="text" id="campo-nome" placeholder="Nome do técnico" autocomplete="name">
+    </div>
+    <div class="field">
+      <label for="campo-local">Local de atendimento</label>
+      <input type="text" id="campo-local" placeholder="Ex: Bloco B, sala 204" autocomplete="off">
+    </div>
+
+    <button class="btn" id="btn-acao" onclick="confirmarAcao()">Registrar retirada</button>
+  </div>
+
+  <!-- ESTADO: Resultado -->
+  <div id="estado-resultado" class="escondido">
+    <div class="resultado-icone ok" id="resultado-icone">✓</div>
+    <p class="resultado-titulo" id="resultado-titulo">—</p>
+    <p class="resultado-msg"   id="resultado-msg">—</p>
+    <div class="resultado-hora" id="resultado-hora">—</div>
+    <br>
+    <button class="btn-novo" onclick="location.reload()">Escanear outro equipamento</button>
+  </div>
+
+  <!-- ESTADO: Erro -->
+  <div id="estado-erro" class="escondido">
+    <div class="erro-icone">⚠️</div>
+    <p class="erro-titulo">Equipamento não encontrado</p>
+    <p class="erro-msg" id="erro-msg">Verifique o QR Code e tente novamente.</p>
+  </div>
+
+</div>
+
+<script>
+// ============================================================
+//  CONFIGURAÇÃO — substitua pela URL do seu Apps Script
+// ============================================================
+const API_URL = 'COLE_AQUI_A_URL_DO_SEU_APPS_SCRIPT';
+
+// ============================================================
+//  Estado global
+// ============================================================
+let equipamentoAtual = null;
+let acaoAtual = ''; // 'retirar' ou 'devolver'
+
+// ============================================================
+//  Inicialização
+// ============================================================
+window.addEventListener('DOMContentLoaded', () => {
+  const params    = new URLSearchParams(window.location.search);
+  const patrimonio = params.get('p');
+
+  if (!patrimonio) {
+    mostrarErro('Nenhum equipamento especificado. Escaneie um QR Code válido.');
+    return;
+  }
+
+  document.getElementById('txt-subtitulo').textContent = `Patrimônio: ${patrimonio}`;
+  buscarEquipamento(patrimonio);
+});
+
+// ============================================================
+//  Buscar equipamento na API
+// ============================================================
+async function buscarEquipamento(patrimonio) {
+  try {
+    const res  = await fetch(`${API_URL}?acao=buscar&patrimonio=${encodeURIComponent(patrimonio)}`);
+    const dados = await res.json();
+
+    if (dados.erro) {
+      mostrarErro(dados.erro);
+      return;
+    }
+
+    equipamentoAtual = dados;
+    renderizarEquipamento(dados);
+  } catch (e) {
+    mostrarErro('Erro de conexão. Verifique sua internet e tente novamente.');
+  }
+}
+
+// ============================================================
+//  Renderizar ficha do equipamento
+// ============================================================
+function renderizarEquipamento(eq) {
+  document.getElementById('equip-nome').textContent     = eq.equipamento;
+  document.getElementById('equip-sub').textContent      = `Patrimônio: ${eq.patrimonio}`;
+  document.getElementById('equip-marca').textContent    = eq.marca    || '—';
+  document.getElementById('equip-modelo').textContent   = eq.modelo   || '—';
+  document.getElementById('equip-categoria').textContent = eq.categoria || '—';
+  document.getElementById('equip-serie').textContent    = eq.serie    || '—';
+
+  const badge = document.getElementById('equip-badge');
+
+  if (eq.status === 'Em uso') {
+    badge.textContent = 'Em uso';
+    badge.className   = 'badge em-uso';
+    acaoAtual = 'devolver';
+
+    const aviso = document.getElementById('aviso-em-uso');
+    aviso.classList.remove('escondido');
+    document.getElementById('aviso-em-uso-detalhe').textContent =
+      `Com: ${eq.responsavel || '?'} — ${eq.localAtual || '?'}`;
+
+    document.getElementById('form-titulo').textContent   = 'Registrar devolução';
+    document.getElementById('btn-acao').textContent      = 'Confirmar devolução';
+    document.getElementById('btn-acao').className        = 'btn btn-devolver';
+  } else {
+    badge.textContent = 'Disponível';
+    badge.className   = 'badge disponivel';
+    acaoAtual = 'retirar';
+
+    document.getElementById('form-titulo').textContent   = 'Registrar retirada';
+    document.getElementById('btn-acao').textContent      = 'Registrar retirada';
+    document.getElementById('btn-acao').className        = 'btn btn-retirar';
+  }
+
+  esconder('estado-carregando');
+  mostrar('estado-equip');
+}
+
+// ============================================================
+//  Confirmar ação (retirada ou devolução)
+// ============================================================
+async function confirmarAcao() {
+  const nome       = document.getElementById('campo-nome').value.trim();
+  const localizacao = document.getElementById('campo-local').value.trim();
+
+  if (!nome || !localizacao) {
+    alert('Preencha seu nome e o local de atendimento.');
+    return;
+  }
+
+  const btn = document.getElementById('btn-acao');
+  btn.disabled    = true;
+  btn.textContent = 'Registrando...';
+
+  try {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' }, // Apps Script requer text/plain no POST
+      body: JSON.stringify({
+        acao:        acaoAtual,
+        patrimonio:  equipamentoAtual.patrimonio,
+        nome:        nome,
+        localizacao: localizacao
+      })
+    });
+
+    const dados = await res.json();
+
+    if (dados.erro) {
+      alert(`Erro: ${dados.erro}`);
+      btn.disabled    = false;
+      btn.textContent = acaoAtual === 'retirar' ? 'Registrar retirada' : 'Confirmar devolução';
+      return;
+    }
+
+    mostrarResultado(dados);
+  } catch (e) {
+    alert('Erro de conexão. Tente novamente.');
+    btn.disabled    = false;
+    btn.textContent = acaoAtual === 'retirar' ? 'Registrar retirada' : 'Confirmar devolução';
+  }
+}
+
+// ============================================================
+//  Mostrar resultado final
+// ============================================================
+function mostrarResultado(dados) {
+  const isRetirada = acaoAtual === 'retirar';
+
+  document.getElementById('resultado-titulo').textContent =
+    isRetirada ? 'Retirada registrada!' : 'Devolução registrada!';
+
+  document.getElementById('resultado-msg').textContent = dados.mensagem;
+  document.getElementById('resultado-hora').textContent = `🕐 ${dados.dataHora}`;
+
+  esconder('estado-equip');
+  mostrar('estado-resultado');
+}
+
+// ============================================================
+//  Mostrar erro
+// ============================================================
+function mostrarErro(msg) {
+  document.getElementById('erro-msg').textContent = msg;
+  esconder('estado-carregando');
+  esconder('estado-equip');
+  mostrar('estado-erro');
+}
+
+// ============================================================
+//  Helpers
+// ============================================================
+function mostrar(id) { document.getElementById(id).classList.remove('escondido'); }
+function esconder(id) { document.getElementById(id).classList.add('escondido'); }
+</script>
+
+</body>
+</html>
